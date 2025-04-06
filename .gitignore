@@ -1,6 +1,10 @@
 # Ignore environment variables and secrets
 .env
 
+# Python virtual environments
+infra/.venv/
+.venv/
+
 # Node modules
 node_modules/
 

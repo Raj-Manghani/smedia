@@ -64,12 +64,13 @@ services:
       - "3000:3000"
 
   nlp-service:
-    build: ./backend  # Initially same as backend, will separate later
+    build: ./backend
     depends_on:
       - kafka
     env_file: .env
     environment:
       - KAFKA_BROKER=kafka:9092
+    command: python nlp_service.py
     ports:
       - "8500:8500"
 
