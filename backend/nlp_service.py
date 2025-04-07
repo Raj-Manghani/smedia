@@ -45,7 +45,9 @@ def analyze_sentiment(text):
         )
         resp.raise_for_status()
         response_json = resp.json()
-        response_text = response_json["choices"][0]["message"]["content"]
+        response_text = response_json[
+            "choices"
+        ][0]["message"]["content"]
         result = json.loads(response_text)
         return result
     except Exception as e:
