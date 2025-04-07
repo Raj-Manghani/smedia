@@ -1,4 +1,4 @@
-from data_pipeline.producer import extract_tickers
+from producer import extract_tickers
 
 
 def test_ticker_pattern():
