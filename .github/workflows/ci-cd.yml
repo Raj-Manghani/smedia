@@ -92,13 +92,16 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push backend image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/backend:latest ./backend
-          docker push ghcr.io/${{ github.repository }}/backend:latest
+          repo_lower=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ghcr.io/$repo_lower/backend:latest ./backend
+          docker push ghcr.io/$repo_lower/backend:latest
       - name: Build and push frontend image
         run: |
-          docker build --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000 -t ghcr.io/${{ github.repository }}/frontend:latest ./frontend
-          docker push ghcr.io/${{ github.repository }}/frontend:latest
+          repo_lower=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000 -t ghcr.io/$repo_lower/frontend:latest ./frontend
+          docker push ghcr.io/$repo_lower/frontend:latest
       - name: Build and push data-pipeline image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/data-pipeline:latest ./data-pipeline
-          docker push ghcr.io/${{ github.repository }}/data-pipeline:latest
+          repo_lower=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ghcr.io/$repo_lower/data-pipeline:latest ./data-pipeline
+          docker push ghcr.io/$repo_lower/data-pipeline:latest
