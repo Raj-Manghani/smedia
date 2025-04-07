@@ -36,8 +36,8 @@ def test_sentiment_feed_empty(monkeypatch, client):
 
             return _Ctx()
 
-    import backend.main
-    backend.main.db_pool = FakePool()
+    import main
+    main.db_pool = FakePool()
 
     resp = client.get("/sentiment-feed")
     assert resp.status_code == 200
