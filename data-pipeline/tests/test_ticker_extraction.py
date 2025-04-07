@@ -1,7 +1,4 @@
-import re
-import pytest
-
-from data_pipeline.producer import extract_tickers, TICKER_PATTERN
+from data_pipeline.producer import extract_tickers
 
 
 def test_ticker_pattern():

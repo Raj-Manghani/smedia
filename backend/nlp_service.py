@@ -44,7 +44,9 @@ def analyze_sentiment(text):
             timeout=30,
         )
         resp.raise_for_status()
-        response_text = resp.json()["choices"][0]["message"]["content"]
+        response_text = (
+            resp.json()["choices"][0]["message"]["content"]
+        )
         result = json.loads(response_text)
         return result
     except Exception as e:
