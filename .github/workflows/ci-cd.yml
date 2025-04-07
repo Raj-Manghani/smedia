@@ -32,6 +32,10 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
+      - name: Lint backend code
+        run: |
+          cd backend
+          flake8 .
       - name: Run backend tests
         run: |
           cd backend
@@ -66,6 +70,10 @@ jobs:
         run: |
           cd data-pipeline
           pip install -r requirements.txt
+      - name: Lint data pipeline code
+        run: |
+          cd data-pipeline
+          flake8 .
       - name: Run pipeline tests
         run: |
           cd data-pipeline
