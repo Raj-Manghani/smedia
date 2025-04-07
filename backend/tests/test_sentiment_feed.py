@@ -2,6 +2,7 @@ import os
 import pytest
 import requests
 
+
 @pytest.mark.skipif(
     os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
     reason="Skip integration test in CI environment"
@@ -16,10 +17,14 @@ def test_sentiment_feed():
             assert "sentiment" in post, "Missing 'sentiment' in post"
             assert "strength" in post, "Missing 'strength' in post"
             assert "keywords" in post, "Missing 'keywords' in post"
-        print(f"Test passed: received {len(data)} enriched posts with sentiment data.")
+        print(
+            f"Test passed: received {len(data)} enriched posts "
+            f"with sentiment data."
+        )
     except Exception as e:
         print(f"Sentiment feed test failed: {e}")
         exit(1)
+
 
 if __name__ == "__main__":
     test_sentiment_feed()
