@@ -26,7 +26,7 @@ def test_sentiment_feed_empty(monkeypatch, client):
             return []
 
     class FakePool:
-        async def acquire(self):
+        def acquire(self):
             class _Ctx:
                 async def __aenter__(self):
                     return FakeConn()
