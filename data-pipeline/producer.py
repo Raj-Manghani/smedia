@@ -8,17 +8,25 @@ import praw
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "kafka:9092")
 TOPIC = "raw_posts"
 
-SUBREDDITS = ["wallstreetbets", "stocks", "investing", "pennystocks", "options"]
+SUBREDDITS = [
+    "wallstreetbets",
+    "stocks",
+    "investing",
+    "pennystocks",
+    "options",
+]
 
 TICKER_PATTERN = re.compile(r'\b[A-Z]{1,5}\b')
+
 
 def extract_tickers(text):
     return list(set(TICKER_PATTERN.findall(text)))
 
+
 def main():
     producer = KafkaProducer(
         bootstrap_servers=KAFKA_BROKER,
-        value_serializer=lambda v: json.dumps(v).encode('utf-8')
+        value_serializer=lambda v: json.dumps(v).encode('utf-8'),
     )
 
     reddit = praw.Reddit(
@@ -44,15 +52,21 @@ def main():
                         "created_utc": post.created_utc,
                         "url": post.url,
                         "author": str(post.author),
-                        "tickers": extract_tickers(post.title + " " + post.selftext),
-                        "permalink": f"https://reddit.com{post.permalink}"
+                        "tickers": extract_tickers(
+                            post.title + " " + post.selftext
+                        ),
+                        "permalink": f"https://reddit.com{post.permalink}",
                     }
                     producer.send(TOPIC, data)
-                    print(f"Sent post {post.id} from r/{subreddit_name} with tickers {data['tickers']}")
+                    print(
+                        f"Sent post {post.id} from r/{subreddit_name} "
+                        f"with tickers {data['tickers']}"
+                    )
             time.sleep(30)
         except Exception as e:
             print(f"Error fetching posts: {e}")
             time.sleep(10)
+
 
 if __name__ == "__main__":
     main()

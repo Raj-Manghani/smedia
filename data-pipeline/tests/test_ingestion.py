@@ -3,6 +3,7 @@ import json
 import pytest
 from kafka import KafkaConsumer
 
+
 @pytest.mark.skipif(
     os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
     reason="Skip integration test in CI environment"
@@ -26,13 +27,20 @@ def test_reddit_ingestion():
 
     assert len(messages) > 0, "No messages received from raw_posts topic"
 
-    required_fields = {"id", "subreddit", "title", "selftext", "created_utc", "url", "author", "tickers", "permalink"}
+    required_fields = {
+        "id", "subreddit", "title", "selftext", "created_utc",
+        "url", "author", "tickers", "permalink"
+    }
 
     for msg in messages:
         missing = required_fields - msg.keys()
         assert not missing, f"Missing fields in message: {missing}"
 
-    print(f"Test passed: received {len(messages)} valid messages from raw_posts topic.")
+    print(
+        f"Test passed: received {len(messages)} valid messages "
+        f"from raw_posts topic."
+    )
+
 
 if __name__ == "__main__":
     test_reddit_ingestion()
