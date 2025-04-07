@@ -88,7 +88,7 @@ services:
     environment:
       - KAFKA_BROKER=kafka:9092
       - DATABASE_URL=postgresql://smedia_user:smedia_pass@postgres:5432/smedia_db
-    command: python db_consumer.py
+    command: /bin/sh -c "sleep 15 && python db_consumer.py"
 
   data-pipeline:
     build: ./data-pipeline
@@ -97,7 +97,7 @@ services:
     env_file: .env
     environment:
       - KAFKA_BROKER=kafka:9092
-    command: python producer.py
+    command: /bin/sh -c "sleep 15 && python producer.py"
 
 volumes:
   postgres_data:
