@@ -56,11 +56,14 @@ def main():
 
     for message in consumer:
         post = message.value
+        print(f"Received post {post.get('id')} from subreddit {post.get('subreddit')}")
         combined_text = post.get("title", "") + "\n" + post.get("selftext", "")
+        print("Calling LLM for sentiment analysis...")
         sentiment_result = analyze_sentiment(combined_text)
+        print(f"LLM response: {sentiment_result}")
         enriched_post = {**post, **sentiment_result}
         producer.send(OUTPUT_TOPIC, enriched_post)
-        print(f"Processed post {post.get('id')} with sentiment {sentiment_result.get('sentiment')}")
+        print(f"Published enriched post {post.get('id')} with sentiment {sentiment_result.get('sentiment')}")
 
 if __name__ == "__main__":
     while True:

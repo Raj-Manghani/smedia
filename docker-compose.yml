@@ -57,9 +57,14 @@ services:
       - "8000:8000"
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
     depends_on:
       - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
     ports:
       - "3000:3000"
 
@@ -73,6 +78,17 @@ services:
     command: python nlp_service.py
     ports:
       - "8500:8500"
+
+  db-consumer:
+    build: ./backend
+    depends_on:
+      - kafka
+      - postgres
+    env_file: .env
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - DATABASE_URL=postgresql://smedia_user:smedia_pass@postgres:5432/smedia_db
+    command: python db_consumer.py
 
   data-pipeline:
     build: ./data-pipeline

@@ -20,7 +20,7 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const resp = await fetch("http://localhost:8000/sentiment-feed");
+        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sentiment-feed`);
         const data = await resp.json();
         setPosts(data);
       } catch (error) {

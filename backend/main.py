@@ -1,31 +1,32 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-import threading
-import json
+from fastapi.middleware.cors import CORSMiddleware
 import os
-from kafka import KafkaConsumer
+import asyncpg
 
 app = FastAPI(title="Smedia Backend API")
 
-enriched_posts_cache = []
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def kafka_consumer_thread():
-    broker = os.getenv("KAFKA_BROKER", "kafka:9092")
-    consumer = KafkaConsumer(
-        "enriched_posts",
-        bootstrap_servers=broker,
-        auto_offset_reset='latest',
-        enable_auto_commit=True,
-        group_id='backend-feed-group',
-        value_deserializer=lambda m: json.loads(m.decode('utf-8'))
-    )
-    for message in consumer:
-        enriched_posts_cache.append(message.value)
-        # Keep only last 100 posts
-        if len(enriched_posts_cache) > 100:
-            enriched_posts_cache.pop(0)
+DB_URL = os.getenv("DATABASE_URL", "postgresql://smedia_user:smedia_pass@postgres:5432/smedia_db")
+db_pool = None
 
-threading.Thread(target=kafka_consumer_thread, daemon=True).start()
+@app.on_event("startup")
+async def startup():
+    global db_pool
+    db_pool = await asyncpg.create_pool(dsn=DB_URL, min_size=1, max_size=5)
+    print("Database connection pool created")
+
+@app.on_event("shutdown")
+async def shutdown():
+    await db_pool.close()
+    print("Database connection pool closed")
 
 @app.get("/")
 async def root():
@@ -37,4 +38,29 @@ async def health():
 
 @app.get("/sentiment-feed")
 async def sentiment_feed():
-    return JSONResponse(content=enriched_posts_cache[-50:])
+    async with db_pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id, subreddit, author, title, selftext, created_utc, url, tickers, sentiment, strength, keywords, permalink
+            FROM posts
+            ORDER BY created_utc DESC
+            LIMIT 50
+            """
+        )
+        posts = []
+        for row in rows:
+            posts.append({
+                "id": row["id"],
+                "subreddit": row["subreddit"],
+                "author": row["author"],
+                "title": row["title"],
+                "selftext": row["selftext"],
+                "created_utc": row["created_utc"].isoformat() if row["created_utc"] else None,
+                "url": row["url"],
+                "tickers": row["tickers"],
+                "sentiment": row["sentiment"],
+                "strength": row["strength"],
+                "keywords": row["keywords"],
+                "permalink": row["permalink"],
+            })
+        return JSONResponse(content=posts)
