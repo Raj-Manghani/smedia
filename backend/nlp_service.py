@@ -30,7 +30,7 @@ def analyze_sentiment(text):
     )
 
     data = {
-        "model": "openai/gpt-3.5-turbo",
+        "model": "quora/quasar-alpha",
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": 150,
         "temperature": 0.2,
