@@ -24,18 +24,35 @@ def extract_tickers(text):
 
 
 def main():
-    producer = KafkaProducer(
-        bootstrap_servers=KAFKA_BROKER,
-        value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-    )
+    print("--- Data Pipeline Starting ---") # Added print
+    try:
+        print(f"Attempting to connect to Kafka broker at {KAFKA_BROKER}...") # Added print
+        producer = KafkaProducer(
+            bootstrap_servers=KAFKA_BROKER,
+            value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+            # Add connection timeout? e.g., request_timeout_ms=5000
+        )
+        print("Kafka producer connected.") # Added print
+    except Exception as e:
+        print(f"!!! Kafka Connection Error: {e}")
+        return # Exit if Kafka fails
 
-    reddit = praw.Reddit(
-        client_id=os.getenv("REDDIT_CLIENT_ID"),
-        client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
-        username=os.getenv("REDDIT_USERNAME"),
-        password=os.getenv("REDDIT_PASSWORD"),
-        user_agent=os.getenv("REDDIT_USER_AGENT"),
-    )
+    try:
+        print("Attempting to authenticate with Reddit...") # Added print
+        reddit = praw.Reddit(
+            client_id=os.getenv("REDDIT_CLIENT_ID"),
+            client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
+            username=os.getenv("REDDIT_USERNAME"),
+            password=os.getenv("REDDIT_PASSWORD"),
+            user_agent=os.getenv("REDDIT_USER_AGENT"),
+            # Add timeout? e.g., timeout=10
+        )
+        # Check if authentication was successful (e.g., by accessing read_only attribute)
+        print(f"Reddit authenticated read_only={reddit.read_only}") # Added print
+    except Exception as e:
+        print(f"!!! Reddit Authentication Error: {e}")
+        return # Exit if Reddit auth fails
+    # Removed stray parenthesis and duplicated reddit init block below
 
     print(f"Streaming subreddits: {SUBREDDITS}")
 

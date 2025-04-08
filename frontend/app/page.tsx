@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import PostCard from '../components/PostCard'; // Import the new component
 
 interface Post {
   id: string;
@@ -12,19 +13,80 @@ interface Post {
   tickers: string[];
   keywords: string[];
   permalink: string;
+  created_utc: string | null;
 }
 
+// Define structure for grouped posts
+interface GroupedPosts {
+  Positive: Post[];
+  Neutral: Post[];
+  Negative: Post[];
+  Unknown: Post[];
+}
+
+// Helper function for sentiment styling
+function getSentimentBgColor(sentiment: string): string {
+  switch (sentiment) {
+    case 'Positive': return 'bg-green-100 text-green-800';
+    case 'Negative': return 'bg-red-100 text-red-800';
+    case 'Neutral': return 'bg-yellow-100 text-yellow-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
+
+
 export default function HomePage() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  // State to hold grouped posts
+  const [groupedPosts, setGroupedPosts] = useState<GroupedPosts>({
+    Positive: [],
+    Neutral: [],
+    Negative: [],
+    Unknown: [],
+  });
 
   useEffect(() => {
     async function fetchData() {
-      try {
+       try {
         const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sentiment-feed`);
-        const data = await resp.json();
-        setPosts(data);
+        const data: Post[] = await resp.json();
+
+        // Group posts by sentiment
+        const newGroupedPosts: GroupedPosts = { Positive: [], Neutral: [], Negative: [], Unknown: [] };
+        data.forEach(post => {
+          // Ensure tickers and keywords are arrays even if null/undefined from API
+          post.tickers = post.tickers || [];
+          post.keywords = post.keywords || [];
+
+          switch (post.sentiment) {
+            case 'Positive':
+              newGroupedPosts.Positive.push(post);
+              break;
+            case 'Neutral':
+              newGroupedPosts.Neutral.push(post);
+              break;
+            case 'Negative':
+              newGroupedPosts.Negative.push(post);
+              break;
+            default:
+              // Handle potential null/undefined sentiment or other values
+              post.sentiment = post.sentiment || 'Unknown';
+              newGroupedPosts.Unknown.push(post);
+              break;
+          }
+        });
+
+        // Sort posts within each group by date (newest first)
+        Object.values(newGroupedPosts).forEach(group => {
+           group.sort((a: Post, b: Post) => // Added Post type annotation
+             (b.created_utc && a.created_utc)
+               ? new Date(b.created_utc).getTime() - new Date(a.created_utc).getTime()
+               : 0
+           );
+        });
+
+        setGroupedPosts(newGroupedPosts); // Update state with grouped data
       } catch (error) {
-        console.error("Error fetching sentiment feed:", error);
+        console.error("Error fetching and grouping sentiment feed:", error);
       }
     }
 
@@ -55,25 +117,35 @@ export default function HomePage() {
         </aside>
 
         <section className="flex-1 p-6 overflow-y-auto">
-          <h2 className="text-2xl font-semibold mb-4">Live Sentiment Feed</h2>
-          <div className="border rounded p-4 mb-6 max-h-[600px] overflow-y-auto">
-            {posts.length === 0 ? (
-              <p>Loading sentiment data...</p>
-            ) : (
-              posts.map((post) => (
-                <div key={post.id} className="mb-4 border-b pb-2">
-                  <div className="font-semibold">{post.title}</div>
-                  <div className="text-sm text-gray-600">{post.subreddit} by {post.author}</div>
-                  <div className="mt-1">Sentiment: <strong>{post.sentiment}</strong> (Strength: {post.strength})</div>
-                  <div className="mt-1">Tickers: {post.tickers && post.tickers.join(", ")}</div>
-                  <div className="mt-1">Keywords: {post.keywords && post.keywords.join(", ")}</div>
-                  <a href={post.permalink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View on Reddit</a>
-                </div>
-              ))
-            )}
-          </div>
+          <h2 className="text-2xl font-semibold mb-4">Live Sentiment Feed (Grouped by Sentiment)</h2>
 
-          <h2 className="text-2xl font-semibold mb-4">Top Tickers</h2>
+          {/* Render posts grouped by sentiment */}
+          {Object.entries(groupedPosts).map(([sentiment, postsInGroup]) => (
+            // Only render the section if there are posts in this group
+            postsInGroup.length > 0 && (
+              <div key={sentiment} className="mb-8"> {/* Increased margin bottom */}
+                {/* Sentiment Group Header */}
+                <h3 className={`text-xl font-semibold mb-3 p-2 rounded ${getSentimentBgColor(sentiment)}`}>
+                  {sentiment} Sentiment ({postsInGroup.length} posts)
+                </h3>
+                {/* Scrollable container for posts within the group */}
+                <div className="border rounded p-4 max-h-[450px] overflow-y-auto space-y-4"> {/* Added space-y-4 */}
+                  {postsInGroup.map((post: Post) => ( // Added Post type annotation
+                    // Use the PostCard component
+                    <PostCard key={post.id} post={post} />
+                  ))}
+                </div>
+              </div>
+            )
+          ))}
+
+           {/* Loading Indicator */}
+           {Object.values(groupedPosts).every(group => group.length === 0) && (
+             <p className="text-gray-500">Loading sentiment data or no posts found...</p>
+           )}
+
+          {/* Placeholder Sections */}
+          <h2 className="text-2xl font-semibold mb-4 mt-8">Top Tickers</h2> {/* Added margin top */}
           <div className="border rounded p-4 mb-6">
             <p>Most discussed tickers with sentiment breakdown will appear here.</p>
           </div>
